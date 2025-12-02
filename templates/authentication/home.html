@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <h1 class="display-4 fw-bold mb-4">VELORA</h1>
+                <p class="lead mb-3">PREMIUM WELLNESS PLATFORM</p>
+                <h2 class="h4 mb-4">Your Personal Wellness & Performance System</h2>
+                <p class="mb-4">Curated experts. Integrated plans. Concierge-led execution. Designed exclusively for high-performance professionals</p>
+                <div class="d-flex gap-3">
+                    <a href="{% url 'authentication:signup' %}" class="btn btn-velora btn-lg">Discover the Platform</a>
+                    <a href="{% url 'authentication:login' %}" class="btn btn-outline-light btn-lg">Login</a>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <img src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80" 
+                     alt="Luxury wellness sanctuary" class="img-fluid rounded shadow-lg">
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="py-5">
+    <div class="container">
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card h-100 text-center p-4">
+                    <div class="card-body">
+                        <i class="fas fa-user-md fa-3x text-primary mb-3"></i>
+                        <h5 class="card-title">Curated Specialists</h5>
+                        <p class="card-text">Handpicked experts across fitness, nutrition, and longevity</p>
+                        <a href="{% url 'specialists:list' %}" class="btn btn-velora">View Specialists</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 text-center p-4">
+                    <div class="card-body">
+                        <i class="fas fa-brain fa-3x text-success mb-3"></i>
+                        <h5 class="card-title">AI-Powered Plans</h5>
+                        <p class="card-text">Personalized integrated wellness strategies tailored to you</p>
+                        <a href="{% url 'wellness_plans:list' %}" class="btn btn-velora">View Plans</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 text-center p-4">
+                    <div class="card-body">
+                        <i class="fas fa-concierge-bell fa-3x text-warning mb-3"></i>
+                        <h5 class="card-title">Concierge Support</h5>
+                        <p class="card-text">Dedicated coordination of your entire wellness journey</p>
+                        <a href="{% url 'concierge:dashboard' %}" class="btn btn-velora">Learn More</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Subscription Tiers -->
+{% if subscription_tiers %}
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="display-5 fw-bold">Choose Your Wellness Journey</h2>
+            <p class="lead">Premium tiers designed for your success</p>
+        </div>
+        <div class="row g-4">
+            {% for tier in subscription_tiers %}
+                <div class="col-lg-3 col-md-6">
+                    <div class="card h-100 {% if tier.name == 'platinum' %}border-primary{% endif %}">
+                        <div class="card-header text-center {% if tier.name == 'platinum' %}bg-primary text-white{% endif %}">
+                            <h5 class="mb-0">{{ tier.display_name }}</h5>
+                        </div>
+                        <div class="card-body text-center">
+                            <div class="display-6 fw-bold text-primary">${{ tier.monthly_price }}</div>
+                            <small class="text-muted">/month</small>
+                            <hr>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-check text-success"></i> {{ tier.max_specialists }} Specialist{{ tier.max_specialists|pluralize }}</li>
+                                <li><i class="fas fa-check text-success"></i> {{ tier.max_wellness_plans }} Wellness Plan{{ tier.max_wellness_plans|pluralize }}</li>
+                                {% if tier.concierge_support %}
+                                    <li><i class="fas fa-check text-success"></i> Concierge Support</li>
+                                {% endif %}
+                                {% if tier.priority_support %}
+                                    <li><i class="fas fa-check text-success"></i> Priority Support</li>
+                                {% endif %}
+                                {% if tier.ai_coaching %}
+                                    <li><i class="fas fa-check text-success"></i> AI Coaching</li>
+                                {% endif %}
+                            </ul>
+                        </div>
+                        <div class="card-footer text-center">
+                            <a href="{% url 'authentication:signup' %}" class="btn btn-velora">Get Started</a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+{% endblock %}
