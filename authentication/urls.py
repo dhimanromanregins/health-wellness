@@ -4,17 +4,25 @@ from . import views
 app_name = 'authentication'
 
 urlpatterns = [
-    # Authentication URLs
-    # path('', views.home_view, name='home'),
-    # path('login/', views.login_view, name='login'),
-    # path('logout/', views.logout_view, name='logout'),
-    # path('signup/', views.SignUpView.as_view(), name='signup'),
+    # Registration API endpoints (3-step process)
+    path('register/', views.initiate_registration, name='initiate_registration'),
+    path('register/verify/', views.verify_registration_otp, name='verify_registration_otp'),
+    path('register/complete/', views.complete_registration, name='complete_registration'),
     
-    # # User dashboard and profile
-    # path('dashboard/', views.dashboard_view, name='dashboard'),
-    # path('profile/', views.profile_view, name='profile'),
-    # path('delete-account/', views.delete_account_view, name='delete_account'),
+    # Authentication endpoints
+    path('login/', views.login, name='login'),
+    path('login/otp/', views.login_with_otp, name='login_with_otp'),
+    path('logout/', views.logout, name='logout'),
+    path('resend-otp/', views.resend_otp, name='resend_otp'),
     
-    # # AJAX endpoints
-    # path('api/update-profile/', views.update_profile_ajax, name='update_profile_ajax'),
+    # User profile endpoints
+    path('profile/', views.user_profile, name='user_profile'),
+    path('profile/update/', views.update_profile, name='update_profile'),
+    path('profile/class-based/', views.UserProfileView.as_view(), name='user_profile_class'),
+    
+    # Onboarding
+    path('onboarding/complete/', views.complete_onboarding, name='complete_onboarding'),
+    
+    # Demo/Development endpoints
+    path('demo/login/', views.demo_login, name='demo_login'),
 ]
