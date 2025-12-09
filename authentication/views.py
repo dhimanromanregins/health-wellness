@@ -6,7 +6,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from django.contrib.auth import authenticate, get_user_model
 from .models import EmailOTP, RegistrationSession
-from .serializers import UserRegistrationSerializer
+from .serializers import UserRegistrationSerializer, UserUpdateSerializer
 import uuid
 from datetime import datetime, timedelta
 from django.utils import timezone
@@ -17,6 +17,7 @@ from rest_framework.authtoken.models import Token
 from rest_framework_simplejwt.tokens import RefreshToken
 import secrets
 from django.contrib.auth.hashers import check_password
+from .models import UserProfile
 
 logger = logging.getLogger(__name__)
 User = get_user_model()  # Use your CustomUser model
@@ -388,67 +389,127 @@ def resend_otp(request):
 @permission_classes([IsAuthenticated])
 def user_profile(request):
     """
-    Get user profile information
+    GET user profile data
     """
-    try:
-        user = request.user
-        return Response({
-            'success': True,
-            'user': {
-                'id': user.id,
-                'username': user.username,
-                'email': user.email,
-                'first_name': user.first_name,
-                'last_name': user.last_name,
-                'date_joined': user.date_joined,
-                'is_active': user.is_active
-            }
-        }, status=status.HTTP_200_OK)
-        
-    except Exception as e:
-        logger.error(f"User profile error: {str(e)}")
-        return Response({
-            'success': False,
-            'message': 'Internal server error'
-        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    user = request.user
+    
+    # Get or create profile
+    profile, created = UserProfile.objects.get_or_create(user=user)
+    
+    profile_data = {
+        'id': user.id,
+        'email': user.email,
+        'first_name': user.first_name,
+        'last_name': user.last_name,
+        'phone_number': user.phone_number or '',
+        'date_of_birth': user.date_of_birth,
+        'gender': user.gender,
+        'profile_picture': user.profile_picture.url if user.profile_picture else None,
+        'age': profile.age or str(user.get_age()) if user.get_age() else '',  # Use profile age or calculated age
+        'health_goals': profile.health_goals,
+        'custom_goals': profile.custom_goals,
+        'dietary_preferences': profile.dietary_preferences,
+        'medical_conditions': profile.medical_conditions,
+        'health_concerns': profile.health_concerns,
+        'occupation': profile.occupation,
+        'work_hours': profile.work_hours,
+        'travel_frequency': profile.travel_frequency,
+        'sleep_hours': profile.sleep_hours,
+        'activity_level': profile.activity_level,
+        'energy_level': profile.energy_level,
+        'sleep_quality': profile.sleep_quality,
+        'wearables': profile.wearables,
+        'emergency_contact': {
+            'name': profile.emergency_contact_name,
+            'phone': profile.emergency_contact_phone,
+            'relationship': profile.emergency_contact_relationship,
+        },
+        'user_data_complete': profile.user_data_complete,
+        'intake_completed_at': profile.intake_completed_at,
+        'is_onboarded': user.onboarding_completed,
+        'date_joined': user.date_joined,
+    }
+    
+    return Response(profile_data)
 
 @api_view(['PUT', 'PATCH'])
 @permission_classes([IsAuthenticated])
 def update_profile(request):
     """
-    Update user profile information
+    PUT/PATCH update user profile data
     """
     try:
         user = request.user
-        data = request.data
+        data = request.data.copy()  # Make a copy to modify
         
-        # Update user fields
-        if 'first_name' in data:
-            user.first_name = data['first_name']
-        if 'last_name' in data:
-            user.last_name = data['last_name']
-        if 'email' in data:
-            user.email = data['email']
-            
+        # Handle date_of_birth string to date conversion
+        if 'date_of_birth' in data and isinstance(data['date_of_birth'], str):
+            try:
+                data['date_of_birth'] = datetime.strptime(data['date_of_birth'], '%Y-%m-%d').date()
+            except ValueError:
+                return Response({
+                    'success': False,
+                    'message': 'Invalid date format. Use YYYY-MM-DD'
+                }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Update CustomUser fields
+        user_fields = ['first_name', 'last_name', 'phone_number', 'date_of_birth', 'gender']
+        for field in user_fields:
+            if field in data:
+                setattr(user, field, data[field])
+        
         user.save()
+        
+        # Get or create UserProfile
+        profile, created = UserProfile.objects.get_or_create(user=user)
+        
+        # Update profile fields directly - now including age as text
+        profile_fields = [
+            'health_goals', 'custom_goals', 'dietary_preferences', 'medical_conditions',
+            'health_concerns', 'occupation', 'work_hours', 'travel_frequency', 'sleep_hours',
+            'activity_level', 'energy_level', 'sleep_quality', 'wearables', 'user_data_complete',
+            'age'  # Now handle age as text field
+        ]
+        
+        for field in profile_fields:
+            if field in data:
+                # Convert age to string if it's a number
+                if field == 'age' and isinstance(data[field], (int, float)):
+                    setattr(profile, field, str(data[field]))
+                else:
+                    setattr(profile, field, data[field])
+        
+        # Handle emergency contact
+        if 'emergency_contact' in data:
+            emergency_contact = data['emergency_contact']
+            profile.emergency_contact_name = emergency_contact.get('name', '')
+            profile.emergency_contact_phone = emergency_contact.get('phone', '')
+            profile.emergency_contact_relationship = emergency_contact.get('relationship', '')
+        
+        # Set intake completion timestamp
+        if data.get('user_data_complete') and not profile.intake_completed_at:
+            profile.intake_completed_at = timezone.now()
+        
+        profile.save()
+        
+        # Mark onboarding as completed if user_data_complete is True
+        if data.get('user_data_complete'):
+            user.onboarding_completed = True
+            user.save()
         
         return Response({
             'success': True,
             'message': 'Profile updated successfully',
-            'user': {
-                'id': user.id,
-                'username': user.username,
-                'email': user.email,
-                'first_name': user.first_name,
-                'last_name': user.last_name
-            }
+            'user_id': user.id,
+            'profile_created': created,
+            'saved_age': profile.age  # Return the saved age text
         }, status=status.HTTP_200_OK)
         
     except Exception as e:
         logger.error(f"Profile update error: {str(e)}")
         return Response({
             'success': False,
-            'message': 'Internal server error'
+            'message': f'Error updating profile: {str(e)}'
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 from rest_framework.views import APIView
@@ -569,6 +630,9 @@ def login(request):
                 logger.info(f"Password check successful for user: {user.username}")
                 
                 if user.is_active:
+                    # Check if user profile exists
+                    profile_exists = UserProfile.objects.filter(user=user).exists()
+                    
                     # Generate JWT tokens for login
                     refresh = RefreshToken.for_user(user)
                     access_token = refresh.access_token
@@ -582,7 +646,8 @@ def login(request):
                             'email': user.email,
                             'first_name': getattr(user, 'first_name', ''),
                             'last_name': getattr(user, 'last_name', ''),
-                            'email_verified': getattr(user, 'is_email_verified', getattr(user, 'email_verified', True))
+                            'email_verified': getattr(user, 'is_email_verified', getattr(user, 'email_verified', True)),
+                            'profile': profile_exists  # Add profile existence flag
                         },
                         'tokens': {
                             'access_token': str(access_token),
