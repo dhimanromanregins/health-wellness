@@ -31,7 +31,14 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-zp#s9lvhgny-*9ijsg8n*6rkqv
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'True').lower() == 'true'
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+# Updated ALLOWED_HOSTS to include server IP
+ALLOWED_HOSTS = [
+    'localhost',
+    '127.0.0.1',
+    '16.171.36.120',  # Your server IP
+    '192.168.1.2',
+    '*'  # Allow all hosts temporarily for debugging
+]
 
 
 # Application definition
@@ -477,17 +484,7 @@ OTP_EXPIRY_MINUTES = 10
 CORS_ALLOW_ALL_ORIGINS = True  # Allow all origins for now
 CORS_ALLOW_CREDENTIALS = True
 
-# Keep the specific origins for future reference
-CORS_ALLOWED_ORIGINS = [
-    "http://192.168.1.2:8080",
-    "http://localhost:8080",
-    "http://127.0.0.1:8080",
-    "http://16.171.36.120",
-    "http://16.171.36.120:8000",
-    "http://16.171.36.120",
-]
-
-# Add specific CORS headers
+# Disable CSRF for API endpoints temporarily
 CORS_ALLOW_HEADERS = [
     'accept',
     'accept-encoding',

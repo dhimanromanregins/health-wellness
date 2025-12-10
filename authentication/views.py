@@ -610,9 +610,21 @@ def login(request):
     """
     User login with email and password
     """
+    # Debug logging
+    print(f"Received request to login endpoint")
+    print(f"Request method: {request.method}")
+    print(f"Request headers: {dict(request.headers)}")
+    
+    # Add debug logging
+    logger.info(f"Login API called - Method: {request.method}, Path: {request.path}")
+    logger.info(f"Request headers: {dict(request.headers)}")
+    
     try:
         email = request.data.get('email')
         password = request.data.get('password')
+        
+        # Log the request data (remove in production)
+        logger.info(f"Login attempt for email: {email}")
         
         if not email or not password:
             return Response({
@@ -679,7 +691,8 @@ def login(request):
         logger.error(f"Login error: {str(e)}")
         return Response({
             'success': False,
-            'message': 'Internal server error'
+            'message': 'Internal server error',
+            'error_details': str(e)  # Add for debugging
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 def home(request):
