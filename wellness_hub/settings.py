@@ -473,16 +473,21 @@ OTP_EXPIRY_MINUTES = 10
 # CELERY_BROKER_URL = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
 # CELERY_RESULT_BACKEND = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
 
-# CORS Settings - Allow all origins for development
-CORS_ALLOW_ALL_ORIGINS = True
+# CORS Settings - Allow all origins for development (TEMPORARY)
+CORS_ALLOW_ALL_ORIGINS = True  # Allow all origins for now
 CORS_ALLOW_CREDENTIALS = True
 
+# Keep the specific origins for future reference
 CORS_ALLOWED_ORIGINS = [
     "http://192.168.1.2:8080",
     "http://localhost:8080",
     "http://127.0.0.1:8080",
+    "http://16.171.36.120",
+    "http://16.171.36.120:8000",
+    "http://16.171.36.120",
 ]
 
+# Add specific CORS headers
 CORS_ALLOW_HEADERS = [
     'accept',
     'accept-encoding',
@@ -494,3 +499,18 @@ CORS_ALLOW_HEADERS = [
     'x-csrftoken',
     'x-requested-with',
 ]
+
+CORS_ALLOW_METHODS = [
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
+]
+
+# Add CORS preflight max age
+CORS_PREFLIGHT_MAX_AGE = 86400
+
+# Add your server IP to ALLOWED_HOSTS
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1,16.171.36.120,192.168.1.2').split(',')
